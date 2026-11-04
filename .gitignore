@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter & Notebooks (kecualikan checkpoint temporer)
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# Model Checkpoints temporer (hanya simpan best model)
+checkpoint_latest.pth
+runs/**/checkpoint_latest.pth
+*.tmp
+
+# Dataset (jika diunduh secara lokal di folder proyek)
+dataset/
+data/
+*.zip
+*.tar
+*.tar.gz
+
+# IDE & OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Pastikan deliverable dan artefak penting tetap ter-track
+!runs/mobilenetv3_cpu/best_mobilenetv3.pth
+!runs/mobilenetv3_cpu/*.png
+!runs/mobilenetv3_cpu/*.csv
+!runs/mobilenetv3_cpu/*.json
+!train_mobilenetV3.ipynb
+!train_mobilenetV3.py

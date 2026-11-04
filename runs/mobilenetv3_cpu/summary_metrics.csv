@@ -1,0 +1,2 @@
+Accuracy,Precision_macro,Recall_macro,F1_macro,Inference_Time_per_image_sec,Training_Time_sec,Best_Val_Accuracy,Peak_RSS_MB
+1.0,1.0,1.0,1.0,0.0071361297369003296,5075.600909233093,1.0,652.9140625

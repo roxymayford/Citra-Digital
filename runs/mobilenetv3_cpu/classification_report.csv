@@ -1,0 +1,9 @@
+,precision,recall,f1-score,support
+Arborio,1.0,1.0,1.0,396.0
+Basmati,1.0,1.0,1.0,399.0
+Ipsala,1.0,1.0,1.0,398.0
+Jasmine,1.0,1.0,1.0,406.0
+Karacadag,1.0,1.0,1.0,401.0
+accuracy,1.0,1.0,1.0,1.0
+macro avg,1.0,1.0,1.0,2000.0
+weighted avg,1.0,1.0,1.0,2000.0

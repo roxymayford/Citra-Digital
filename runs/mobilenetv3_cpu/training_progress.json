@@ -1,0 +1,12 @@
+{
+  "epoch": 14,
+  "epochs_total": 100,
+  "train_loss": 0.0024,
+  "val_acc": 1.0,
+  "best_acc": 1.0,
+  "patience": "10/10",
+  "peak_rss_mb": 652.9,
+  "available_ram_mb": 452.4,
+  "swap_used_mb": 1515.2,
+  "total_time_sec": 5075.4
+}
