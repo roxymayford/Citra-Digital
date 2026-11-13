@@ -1,0 +1,51 @@
+{
+  "$schema": "https://design-tokens.org/schema.json",
+  "meta": {
+    "name": "Citra Digital Swiss Modernism 2.0",
+    "author": "Raihan Shandi Adrida Meilano",
+    "style": "Swiss International Typographic Style"
+  },
+  "primitive": {
+    "color": {
+      "paper": { "$value": "#F4F3EF", "$type": "color" },
+      "white": { "$value": "#FFFFFF", "$type": "color" },
+      "surface-alt": { "$value": "#EAE8E1", "$type": "color" },
+      "ink": { "$value": "#0B0B0C", "$type": "color" },
+      "ink-secondary": { "$value": "#424246", "$type": "color" },
+      "ink-muted": { "$value": "#6E6E73", "$type": "color" },
+      "rule": { "$value": "#D2D0C8", "$type": "color" },
+      "swiss-red": { "$value": "#E1261C", "$type": "color" },
+      "swiss-red-dark": { "$value": "#B91C14", "$type": "color" },
+      "swiss-red-tint": { "$value": "#FCEAE8", "$type": "color" },
+      "dark-bg": { "$value": "#0B0B0C", "$type": "color" },
+      "dark-surface": { "$value": "#161618", "$type": "color" },
+      "dark-rule": { "$value": "#2E2E32", "$type": "color" },
+      "dark-muted": { "$value": "#A1A1A8", "$type": "color" },
+      "backdrop": { "$value": "#19191B", "$type": "color" }
+    },
+    "spacing": {
+      "1": { "$value": "0.25rem", "$type": "dimension" },
+      "2": { "$value": "0.5rem", "$type": "dimension" },
+      "3": { "$value": "0.75rem", "$type": "dimension" },
+      "4": { "$value": "1rem", "$type": "dimension" },
+      "5": { "$value": "1.25rem", "$type": "dimension" },
+      "6": { "$value": "1.5rem", "$type": "dimension" },
+      "8": { "$value": "2rem", "$type": "dimension" },
+      "10": { "$value": "2.5rem", "$type": "dimension" },
+      "12": { "$value": "3rem", "$type": "dimension" }
+    },
+    "radius": {
+      "none": { "$value": "0px", "$type": "dimension" }
+    }
+  },
+  "semantic": {
+    "color": {
+      "primary": { "$value": "{primitive.color.swiss-red}", "$type": "color" },
+      "secondary": { "$value": "{primitive.color.ink}", "$type": "color" },
+      "background": { "$value": "{primitive.color.paper}", "$type": "color" },
+      "surface": { "$value": "{primitive.color.white}", "$type": "color" },
+      "foreground": { "$value": "{primitive.color.ink}", "$type": "color" },
+      "border": { "$value": "{primitive.color.rule}", "$type": "color" }
+    }
+  }
+}

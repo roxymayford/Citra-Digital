@@ -1,0 +1,2140 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klasifikasi Citra Varietas Beras — Raihan Shandi Adrida Meilano</title>
+
+    <!-- Typography: Swiss Neo-Grotesque & Tabular Monospace -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Design Tokens (Single Source of Truth) -->
+    <link rel="stylesheet" href="assets/design-tokens.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <style>
+        /* ==================================================================
+           SWISS MODERNISM 2.0 — PRESENTATION SYSTEM
+           Strict token compliance: zero hardcoded colors or font families.
+           ================================================================== */
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: var(--color-backdrop);
+            color: var(--color-foreground);
+            font-family: var(--typography-font-body);
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Progress Bar */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            width: 0%;
+            background: var(--color-primary);
+            transition: width var(--primitive-duration-base) var(--primitive-easing-out);
+            z-index: 1000;
+        }
+
+        /* 16:9 Aspect-Ratio Presentation Viewport */
+        .slide-deck {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: var(--slide-bg);
+        }
+
+        @media (min-width: 769px) {
+            .slide-deck {
+                max-width: calc(100vh * 16 / 9);
+                max-height: calc(100vw * 9 / 16);
+                margin: auto;
+                position: absolute;
+                inset: 0;
+                border: 1px solid var(--color-border-strong);
+            }
+        }
+
+        /* Slide Base */
+        .slide {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            padding: var(--slide-padding-y) var(--slide-padding-x);
+            background: var(--slide-bg);
+            color: var(--color-foreground);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: clamp(10px, 1.4vh, 18px);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity var(--primitive-duration-base) var(--primitive-easing-out);
+            overflow: hidden;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .slide--surface {
+            background: var(--slide-bg-surface);
+        }
+
+        .slide--dark {
+            background: var(--slide-bg-dark);
+            color: var(--color-inverse-fg);
+        }
+
+        /* Swiss Masthead (Top Rule) */
+        .swiss-masthead {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: clamp(8px, 1vh, 12px);
+            border-bottom: 2px solid var(--color-border-strong);
+            flex-shrink: 0;
+            font-family: var(--typography-font-mono);
+            font-size: var(--primitive-fontSize-2xs);
+            letter-spacing: var(--primitive-letterSpacing-wider);
+            text-transform: uppercase;
+        }
+
+        .slide--dark .swiss-masthead {
+            border-bottom-color: var(--color-inverse-fg);
+        }
+
+        .masthead-left {
+            display: flex;
+            align-items: center;
+            gap: var(--primitive-spacing-3);
+            font-weight: var(--primitive-fontWeight-semibold);
+        }
+
+        .swiss-square {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: var(--color-primary);
+            flex-shrink: 0;
+        }
+
+        .masthead-right {
+            display: flex;
+            align-items: center;
+            gap: var(--primitive-spacing-4);
+            color: var(--color-foreground-muted);
+        }
+
+        .slide--dark .masthead-right {
+            color: var(--color-inverse-muted);
+        }
+
+        .masthead-index {
+            color: var(--color-foreground);
+            font-weight: var(--primitive-fontWeight-bold);
+        }
+
+        .slide--dark .masthead-index {
+            color: var(--color-primary);
+        }
+
+        /* Main Slide Body (12-Column Swiss Grid) */
+        .slide-content {
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .swiss-grid {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: clamp(12px, 1.6vw, 24px);
+            align-items: stretch;
+        }
+
+        .col-3 { grid-column: span 3; }
+        .col-4 { grid-column: span 4; }
+        .col-5 { grid-column: span 5; }
+        .col-6 { grid-column: span 6; }
+        .col-7 { grid-column: span 7; }
+        .col-8 { grid-column: span 8; }
+        .col-12 { grid-column: span 12; }
+
+        /* Swiss Footer Strip */
+        .swiss-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: clamp(8px, 1vh, 10px);
+            padding-right: clamp(140px, 16vw, 190px);
+            border-top: 1px solid var(--color-border);
+            flex-shrink: 0;
+            font-family: var(--typography-font-mono);
+            font-size: var(--primitive-fontSize-2xs);
+            letter-spacing: var(--primitive-letterSpacing-wide);
+            color: var(--color-foreground-muted);
+            text-transform: uppercase;
+        }
+
+        .slide--dark .swiss-footer {
+            border-top-color: var(--color-inverse-border);
+            color: var(--color-inverse-muted);
+        }
+
+        .footer-author {
+            color: var(--color-foreground);
+            font-weight: var(--primitive-fontWeight-semibold);
+        }
+
+        .slide--dark .footer-author {
+            color: var(--color-inverse-fg);
+        }
+
+        /* Typography */
+        h1, h2, h3, h4 {
+            font-family: var(--typography-font-heading);
+            font-weight: var(--primitive-fontWeight-bold);
+            line-height: var(--primitive-lineHeight-tight);
+            letter-spacing: var(--primitive-letterSpacing-tight);
+        }
+
+        .kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--primitive-spacing-2);
+            font-family: var(--typography-font-mono);
+            font-size: var(--primitive-fontSize-2xs);
+            font-weight: var(--primitive-fontWeight-bold);
+            letter-spacing: var(--primitive-letterSpacing-wider);
+            text-transform: uppercase;
+            color: var(--color-primary);
+            margin-bottom: clamp(6px, 0.9vh, 12px);
+        }
+
+        .slide-title {
+            font-size: var(--slide-title-size);
+            font-weight: var(--primitive-fontWeight-black);
+            line-height: var(--primitive-lineHeight-none);
+            letter-spacing: var(--primitive-letterSpacing-tight);
+            color: var(--color-foreground);
+        }
+
+        .slide-heading {
+            font-size: var(--slide-heading-size);
+            font-weight: var(--primitive-fontWeight-extrabold);
+            line-height: var(--primitive-lineHeight-tight);
+            letter-spacing: var(--primitive-letterSpacing-tight);
+        }
+
+        .slide-lead {
+            font-size: clamp(0.92rem, 1.25vw, 1.16rem);
+            line-height: var(--primitive-lineHeight-normal);
+            color: var(--color-foreground-secondary);
+        }
+
+        .slide--dark .slide-lead {
+            color: var(--color-inverse-muted);
+        }
+
+        .body-text {
+            font-size: var(--slide-body-size);
+            line-height: var(--primitive-lineHeight-normal);
+            color: var(--color-foreground-secondary);
+        }
+
+        .mono {
+            font-family: var(--typography-font-mono);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .accent-rule {
+            width: clamp(48px, 6vw, 84px);
+            height: 4px;
+            background: var(--color-primary);
+            margin: clamp(10px, 1.4vh, 18px) 0;
+        }
+
+        /* Swiss Modular Cards & Cells */
+        .swiss-panel {
+            background: var(--card-bg);
+            border: var(--card-border);
+            border-radius: var(--card-radius);
+            padding: var(--card-padding);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .swiss-panel--subtle {
+            background: var(--color-surface-alt);
+            border: var(--card-border-subtle);
+        }
+
+        .swiss-panel--ink {
+            background: var(--color-secondary);
+            color: var(--color-surface);
+            border: 1px solid var(--color-secondary);
+        }
+
+        .swiss-panel--dark {
+            background: var(--color-inverse-surface);
+            color: var(--color-inverse-fg);
+            border: 1px solid var(--color-inverse-border);
+        }
+
+        .swiss-panel--red-top {
+            border-top: 4px solid var(--color-primary);
+        }
+
+        .swiss-panel--black-top {
+            border-top: 4px solid var(--color-border-strong);
+        }
+
+        /* Slide 01: Cover Poster */
+        .cover-left {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding-right: clamp(8px, 1.5vw, 24px);
+        }
+
+        .cover-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            border-top: 2px solid var(--color-border-strong);
+            padding-top: clamp(10px, 1.4vh, 16px);
+            gap: var(--primitive-spacing-4);
+        }
+
+        .meta-label {
+            font-family: var(--typography-font-mono);
+            font-size: var(--primitive-fontSize-2xs);
+            letter-spacing: var(--primitive-letterSpacing-wide);
+            text-transform: uppercase;
+            color: var(--color-foreground-muted);
+            margin-bottom: 4px;
+        }
+
+        .meta-value {
+            font-size: clamp(0.84rem, 1.05vw, 0.98rem);
+            font-weight: var(--primitive-fontWeight-bold);
+            color: var(--color-foreground);
+        }
+
+        .cover-right {
+            display: grid;
+            grid-template-rows: 1.4fr 1fr 1fr;
+            border: 2px solid var(--color-border-strong);
+            background: var(--color-surface);
+        }
+
+        .cover-stat-hero {
+            background: var(--color-secondary);
+            color: var(--color-surface);
+            padding: clamp(14px, 1.8vw, 24px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-bottom: 4px solid var(--color-primary);
+        }
+
+        .cover-stat-number {
+            font-family: var(--typography-font-heading);
+            font-size: clamp(2.8rem, 4.6vw, 4.4rem);
+            font-weight: var(--primitive-fontWeight-black);
+            line-height: var(--primitive-lineHeight-none);
+            letter-spacing: var(--primitive-letterSpacing-tight);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .cover-stat-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            border-top: 1px solid var(--color-border);
+        }
+
+        .cover-stat-cell {
+            padding: clamp(12px, 1.4vw, 20px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .cover-stat-cell:first-child {
+            border-right: 1px solid var(--color-border);
+        }
+
+        .stat-val-md {
+            font-family: var(--typography-font-heading);
+            font-size: clamp(1.35rem, 2.2vw, 2rem);
+            font-weight: var(--primitive-fontWeight-extrabold);
+            letter-spacing: var(--primitive-letterSpacing-snug);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Slide 02: Numbered Editorial Rows */
+        .swiss-list-stack {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            border-top: 2px solid var(--color-border-strong);
+        }
+
+        .swiss-row-item {
+            display: grid;
+            grid-template-columns: 64px 1fr;
+            gap: var(--primitive-spacing-4);
+            padding: clamp(12px, 1.6vh, 20px) 0;
+            border-bottom: 1px solid var(--color-border);
+            align-items: center;
+            flex: 1;
+        }
+
+        .swiss-row-item:last-child {
+            border-bottom: 2px solid var(--color-border-strong);
+        }
+
+        .row-num {
+            font-family: var(--typography-font-mono);
+            font-size: clamp(1.25rem, 2vw, 1.85rem);
+            font-weight: var(--primitive-fontWeight-bold);
+            color: var(--color-primary);
+            line-height: 1;
+        }
+
+        .row-title {
+            font-size: clamp(1rem, 1.35vw, 1.25rem);
+            font-weight: var(--primitive-fontWeight-bold);
+            margin-bottom: 4px;
+            color: var(--color-foreground);
+        }
+
+        .table-scroll {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        /* Slide 03: Dataset Table & Chart */
+        .swiss-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: clamp(0.75rem, 0.92vw, 0.88rem);
+            background: var(--color-surface);
+            border: 1px solid var(--color-border-strong);
+        }
+
+        .swiss-table th,
+        .swiss-table td {
+            padding: clamp(6px, 0.85vh, 10px) clamp(8px, 0.9vw, 12px);
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+            vertical-align: top;
+        }
+
+        .swiss-table thead th {
+            background: var(--color-secondary);
+            color: var(--color-surface);
+            font-family: var(--typography-font-mono);
+            font-size: var(--primitive-fontSize-2xs);
+            letter-spacing: var(--primitive-letterSpacing-wide);
+            text-transform: uppercase;
+            font-weight: var(--primitive-fontWeight-semibold);
+        }
+
+        .swiss-table .num-col {
+            text-align: right;
+            font-family: var(--typography-font-mono);
+            font-variant-numeric: tabular-nums;
+            font-weight: var(--primitive-fontWeight-semibold);
+        }
+
+        .spec-strip {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            border: 1px solid var(--color-border-strong);
+            background: var(--color-surface);
+        }
+
+        .spec-cell {
+            padding: clamp(8px, 1vh, 12px);
+            border-right: 1px solid var(--color-border);
+        }
+
+        .spec-cell:last-child {
+            border-right: none;
+        }
+
+        .chart-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-border-strong);
+            padding: clamp(12px, 1.5vw, 20px);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .chart-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 6px;
+            margin-bottom: clamp(8px, 1vh, 12px);
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--color-border);
+            flex-shrink: 0;
+        }
+
+        .chart-title {
+            font-size: clamp(0.88rem, 1.1vw, 1.05rem);
+            font-weight: var(--primitive-fontWeight-bold);
+        }
+
+        .chart-wrap {
+            position: relative;
+            flex: 1;
+            min-height: 140px;
+            width: 100%;
+        }
+
+        /* Slide 04: Architecture Flow & 2x2 Grid */
+        .arch-layout {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(12px, 1.6vh, 20px);
+            height: 100%;
+        }
+
+        .pipeline-strip {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            border: 2px solid var(--color-border-strong);
+            background: var(--color-background);
+            flex-shrink: 0;
+        }
+
+        .pipe-step {
+            padding: clamp(10px, 1.3vw, 16px);
+            border-right: 1px solid var(--color-border-strong);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 4px;
+        }
+
+        .pipe-step:last-child {
+            border-right: none;
+            background: var(--color-secondary);
+            color: var(--color-surface);
+        }
+
+        .pipe-tag {
+            font-family: var(--typography-font-mono);
+            font-size: var(--primitive-fontSize-2xs);
+            letter-spacing: var(--primitive-letterSpacing-wide);
+            color: var(--color-primary);
+            font-weight: var(--primitive-fontWeight-bold);
+        }
+
+        .pipe-step:last-child .pipe-tag {
+            color: var(--color-primary);
+        }
+
+        .grid-2x2 {
+            flex: 1;
+            min-height: 0;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-rows: repeat(2, minmax(0, 1fr));
+            gap: clamp(10px, 1.3vw, 16px);
+        }
+
+        /* Slide 05: Training & Watchdog */
+        .kv-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            border-top: 2px solid var(--color-border-strong);
+            border-left: 1px solid var(--color-border);
+            background: var(--color-surface);
+        }
+
+        .kv-cell {
+            padding: clamp(10px, 1.2vh, 14px) clamp(12px, 1.4vw, 18px);
+            border-right: 1px solid var(--color-border);
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .watchdog-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: clamp(8px, 1.1vh, 14px);
+        }
+
+        .watchdog-list li {
+            padding-left: var(--primitive-spacing-4);
+            border-left: 3px solid var(--color-primary);
+        }
+
+        /* Slide 06: Dark Swiss Poster (Pattern Break) */
+        .dark-hero-band {
+            display: grid;
+            grid-template-columns: 7fr 5fr;
+            gap: clamp(16px, 2vw, 32px);
+            align-items: end;
+            padding-bottom: clamp(14px, 2vh, 24px);
+            border-bottom: 1px solid var(--color-inverse-border);
+        }
+
+        .dark-giant-stat {
+            font-family: var(--typography-font-heading);
+            font-size: clamp(3.6rem, 7vw, 6.4rem);
+            font-weight: var(--primitive-fontWeight-black);
+            line-height: var(--primitive-lineHeight-none);
+            letter-spacing: var(--primitive-letterSpacing-tight);
+            color: var(--color-inverse-fg);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .dark-giant-stat span {
+            color: var(--color-primary);
+        }
+
+        .dark-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: clamp(10px, 1.3vw, 18px);
+            flex: 1;
+            padding-top: clamp(12px, 1.8vh, 22px);
+        }
+
+        .dark-kpi-val {
+            font-family: var(--typography-font-heading);
+            font-size: clamp(1.6rem, 2.7vw, 2.5rem);
+            font-weight: var(--primitive-fontWeight-extrabold);
+            line-height: 1.05;
+            font-variant-numeric: tabular-nums;
+            margin: 6px 0;
+        }
+
+        /* Slide 07: Confusion Matrix + Classification Chart */
+        .cm-grid {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--color-surface);
+            border: 2px solid var(--color-border-strong);
+            font-family: var(--typography-font-mono);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .cm-grid th,
+        .cm-grid td {
+            border: 1px solid var(--color-border);
+            text-align: center;
+            padding: clamp(6px, 0.9vh, 11px) 6px;
+            font-size: clamp(0.72rem, 0.9vw, 0.86rem);
+        }
+
+        .cm-grid thead th {
+            background: var(--color-background);
+            font-size: var(--primitive-fontSize-2xs);
+            letter-spacing: var(--primitive-letterSpacing-wide);
+            text-transform: uppercase;
+            font-weight: var(--primitive-fontWeight-bold);
+        }
+
+        .cm-grid tbody th {
+            background: var(--color-background);
+            text-align: left;
+            padding-left: 10px;
+            font-size: var(--primitive-fontSize-2xs);
+            text-transform: uppercase;
+            letter-spacing: var(--primitive-letterSpacing-wide);
+        }
+
+        .cm-diag {
+            background: var(--color-secondary);
+            color: var(--color-surface);
+            font-weight: var(--primitive-fontWeight-bold);
+            border: 1px solid var(--color-secondary);
+        }
+
+        .cm-zero {
+            color: var(--color-foreground-muted);
+            background: var(--color-surface);
+        }
+
+        .artifact-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: var(--button-primary-bg);
+            color: var(--button-primary-fg);
+            border: none;
+            border-radius: var(--button-primary-radius);
+            font-family: var(--typography-font-mono);
+            font-size: var(--primitive-fontSize-2xs);
+            letter-spacing: var(--primitive-letterSpacing-wide);
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background var(--primitive-duration-fast) var(--primitive-easing-out);
+        }
+
+        .artifact-btn:hover {
+            background: var(--button-primary-bg-hover);
+        }
+
+        /* Slide 08: Artifacts List */
+        .artifact-list {
+            border-top: 2px solid var(--color-border-strong);
+            background: var(--color-surface);
+            border-left: 1px solid var(--color-border);
+            border-right: 1px solid var(--color-border);
+        }
+
+        .artifact-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            padding: clamp(7px, 1vh, 11px) 14px;
+            border-bottom: 1px solid var(--color-border);
+            align-items: center;
+        }
+
+        .artifact-name {
+            font-family: var(--typography-font-mono);
+            font-size: clamp(0.74rem, 0.9vw, 0.85rem);
+            font-weight: var(--primitive-fontWeight-semibold);
+            color: var(--color-foreground);
+        }
+
+        .artifact-desc {
+            font-size: clamp(0.72rem, 0.85vw, 0.82rem);
+            color: var(--color-foreground-muted);
+        }
+
+        .artifact-tag {
+            font-family: var(--typography-font-mono);
+            font-size: var(--primitive-fontSize-2xs);
+            padding: 3px 8px;
+            background: var(--color-surface-alt);
+            color: var(--color-foreground);
+            font-weight: var(--primitive-fontWeight-semibold);
+        }
+
+        /* Slide 09: Closing Sign-off */
+        .closing-takeaways {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: clamp(12px, 1.5vw, 20px);
+        }
+
+        .closing-signature {
+            display: grid;
+            grid-template-columns: 7fr 5fr;
+            gap: clamp(14px, 1.8vw, 24px);
+            border-top: 4px solid var(--color-border-strong);
+            padding-top: clamp(12px, 1.6vh, 20px);
+            align-items: end;
+        }
+
+        /* Navigation Controls (Fixed Bottom Right, Safe Space Reserved in Footer) */
+        .nav-controls {
+            position: fixed;
+            bottom: 12px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            background: var(--color-secondary);
+            color: var(--color-surface);
+            border: 1px solid var(--color-border-strong);
+            z-index: 1001;
+        }
+
+        .nav-btn {
+            background: var(--color-secondary);
+            color: var(--color-surface);
+            border: none;
+            width: 36px;
+            height: 34px;
+            cursor: pointer;
+            font-family: var(--typography-font-mono);
+            font-size: var(--primitive-fontSize-sm);
+            font-weight: var(--primitive-fontWeight-bold);
+            transition: background var(--primitive-duration-fast) var(--primitive-easing-out);
+        }
+
+        .nav-btn:hover {
+            background: var(--color-primary);
+        }
+
+        .slide-counter {
+            padding: 0 12px;
+            font-family: var(--typography-font-mono);
+            font-size: var(--primitive-fontSize-2xs);
+            letter-spacing: var(--primitive-letterSpacing-wide);
+            border-left: 1px solid var(--color-inverse-border);
+            border-right: 1px solid var(--color-inverse-border);
+            height: 34px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        /* Quick Jump Index Modal */
+        .index-drawer {
+            position: fixed;
+            bottom: 54px;
+            right: 20px;
+            width: min(340px, 90vw);
+            background: var(--color-surface);
+            border: 2px solid var(--color-border-strong);
+            z-index: 1002;
+            display: none;
+            flex-direction: column;
+        }
+
+        .index-drawer.open {
+            display: flex;
+        }
+
+        .index-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border: none;
+            border-bottom: 1px solid var(--color-border);
+            background: var(--color-surface);
+            color: var(--color-foreground);
+            text-align: left;
+            font-family: var(--typography-font-body);
+            font-size: var(--primitive-fontSize-xs);
+            cursor: pointer;
+        }
+
+        .index-item:last-child {
+            border-bottom: none;
+        }
+
+        .index-item:hover,
+        .index-item.current {
+            background: var(--color-secondary);
+            color: var(--color-surface);
+        }
+
+        .index-item-num {
+            font-family: var(--typography-font-mono);
+            font-weight: var(--primitive-fontWeight-bold);
+            color: var(--color-primary);
+        }
+
+        /* Artifact Lightbox Modal */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: var(--color-backdrop);
+            z-index: 1100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: var(--color-surface);
+            border: 2px solid var(--color-border-strong);
+            max-width: 780px;
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--color-border-strong);
+            padding-bottom: 10px;
+        }
+
+        .modal-img {
+            width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+            border: 1px solid var(--color-border);
+        }
+
+        /* Animations on Active Slide */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide.active .animate-fade-up {
+            animation: fadeUp var(--primitive-duration-base) var(--primitive-easing-out) forwards;
+        }
+
+        .slide.active .animate-stagger > * {
+            opacity: 0;
+            animation: fadeUp 0.35s var(--primitive-easing-out) forwards;
+        }
+        .slide.active .animate-stagger > *:nth-child(1) { animation-delay: 0.05s; }
+        .slide.active .animate-stagger > *:nth-child(2) { animation-delay: 0.12s; }
+        .slide.active .animate-stagger > *:nth-child(3) { animation-delay: 0.19s; }
+        .slide.active .animate-stagger > *:nth-child(4) { animation-delay: 0.26s; }
+
+        /* ===== RESPONSIVE BREAKPOINTS ===== */
+        @media (max-width: 768px) {
+            .slide-deck {
+                overflow-y: auto;
+            }
+            .slide {
+                padding: 16px 16px 68px;
+                justify-content: flex-start;
+                gap: 14px;
+                overflow-y: auto;
+            }
+            .slide:not(.active) {
+                display: none;
+            }
+            .slide-content {
+                flex: 0 0 auto;
+                justify-content: flex-start;
+            }
+            .swiss-masthead {
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .swiss-grid {
+                grid-template-columns: minmax(0, 1fr);
+                height: auto;
+                gap: 14px;
+            }
+            .col-3, .col-4, .col-5, .col-6, .col-7, .col-8, .col-12 {
+                grid-column: 1 / -1;
+            }
+            .cover-meta-grid,
+            .pipeline-strip,
+            .grid-2x2,
+            .kv-grid,
+            .dark-hero-band,
+            .dark-kpi-grid,
+            .closing-takeaways,
+            .closing-signature {
+                grid-template-columns: 1fr;
+            }
+            .dark-kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .chart-wrap {
+                height: 250px;
+                min-height: 250px;
+            }
+            .swiss-footer {
+                padding-right: 0;
+                margin-top: 8px;
+            }
+            .nav-controls {
+                bottom: 10px;
+                right: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .slide {
+                padding: 14px 14px 66px;
+            }
+            .masthead-right span:first-child {
+                display: none;
+            }
+            .dark-kpi-grid,
+            .spec-strip {
+                grid-template-columns: 1fr;
+            }
+            .spec-cell {
+                border-right: none;
+                border-bottom: 1px solid var(--color-border);
+            }
+            .spec-cell:last-child {
+                border-bottom: none;
+            }
+            .swiss-row-item {
+                grid-template-columns: 42px 1fr;
+            }
+            .swiss-footer span:last-child {
+                display: none;
+            }
+        }
+
+        @media print {
+            html, body {
+                overflow: visible;
+                background: var(--color-surface);
+            }
+            .progress-bar,
+            .nav-controls,
+            .index-drawer,
+            .modal-backdrop {
+                display: none;
+            }
+            .slide-deck {
+                position: static;
+                max-width: none;
+                max-height: none;
+                width: 100%;
+                height: auto;
+                border: none;
+            }
+            .slide {
+                position: relative;
+                opacity: 1;
+                visibility: visible;
+                page-break-after: always;
+                height: 100vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+
+    <div class="slide-deck" id="slideDeck">
+
+        <!-- ==================== SLIDE 01: COVER POSTER ==================== -->
+        <section class="slide active" data-title="Sampul & Identitas Proyek">
+            <header class="swiss-masthead">
+                <div class="masthead-left">
+                    <span class="swiss-square"></span>
+                    <span>PENGOLAHAN CITRA DIGITAL // LAPORAN NOTEBOOK</span>
+                </div>
+                <div class="masthead-right">
+                    <span>PYTORCH · CPU PIPELINE</span>
+                    <span class="masthead-index">01 / 09</span>
+                </div>
+            </header>
+
+            <div class="slide-content">
+                <div class="swiss-grid animate-fade-up">
+                    <div class="col-8 cover-left">
+                        <div>
+                            <div class="kicker">
+                                <span class="swiss-square"></span>
+                                <span>KLASIFIKASI CITRA VARIETAS BERAS</span>
+                            </div>
+                            <h1 class="slide-title">MobileNetV3-Small untuk Identifikasi 5 Varietas Beras.</h1>
+                            <div class="accent-rule"></div>
+                            <p class="slide-lead">
+                                Dokumentasi hasil eksekusi notebook <span class="mono">train_mobilenetV3.ipynb</span>:
+                                transfer learning ringan pada lingkungan CPU dengan mekanisme watchdog anti-OOM
+                                dan evaluasi penuh terhadap 2.000 citra uji.
+                            </p>
+                        </div>
+
+                        <div class="cover-meta-grid">
+                            <div>
+                                <div class="meta-label">Disusun Oleh</div>
+                                <div class="meta-value">Raihan Shandi Adrida Meilano</div>
+                            </div>
+                            <div>
+                                <div class="meta-label">Repositori</div>
+                                <div class="meta-value mono">roxymayford/Citra-Digital</div>
+                            </div>
+                            <div>
+                                <div class="meta-label">Model Checkpoint</div>
+                                <div class="meta-value mono">best_mobilenetv3.pth (6,22 MB)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-4 cover-right">
+                        <div class="cover-stat-hero">
+                            <div class="meta-label" style="color: var(--color-inverse-muted);">VALIDASI AKURASI</div>
+                            <div class="cover-stat-number">100<span style="color: var(--color-primary);">%</span></div>
+                            <div class="mono" style="font-size: var(--primitive-fontSize-xs); color: var(--color-inverse-muted);">
+                                2.000 / 2.000 CITRA UJI TEPAT
+                            </div>
+                        </div>
+                        <div class="cover-stat-row">
+                            <div class="cover-stat-cell">
+                                <div class="meta-label">Dataset</div>
+                                <div class="stat-val-md">10.000</div>
+                                <div class="body-text">Citra (80:20 Split)</div>
+                            </div>
+                            <div class="cover-stat-cell">
+                                <div class="meta-label">Kelas</div>
+                                <div class="stat-val-md">5</div>
+                                <div class="body-text">Varietas Komersial</div>
+                            </div>
+                        </div>
+                        <div class="cover-stat-row">
+                            <div class="cover-stat-cell">
+                                <div class="meta-label">Inferensi CPU</div>
+                                <div class="stat-val-md">7,14 ms</div>
+                                <div class="body-text">~140 FPS Benchmark</div>
+                            </div>
+                            <div class="cover-stat-cell">
+                                <div class="meta-label">Peak RAM</div>
+                                <div class="stat-val-md">652,9 MB</div>
+                                <div class="body-text">Epoch 14 Early Stop</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="swiss-footer">
+                <span class="footer-author">RAIHAN SHANDI ADRIDA MEILANO</span>
+                <span>CITRA DIGITAL · MOBILENETV3-SMALL</span>
+            </footer>
+        </section>
+
+        <!-- ==================== SLIDE 02: LATAR BELAKANG & MASALAH ==================== -->
+        <section class="slide slide--surface" data-title="Latar Belakang & Tantangan">
+            <header class="swiss-masthead">
+                <div class="masthead-left">
+                    <span class="swiss-square"></span>
+                    <span>01 — KONTEKS & RUMUSAN MASALAH</span>
+                </div>
+                <div class="masthead-right">
+                    <span>QUALITY CONTROL PANGAN</span>
+                    <span class="masthead-index">02 / 09</span>
+                </div>
+            </header>
+
+            <div class="slide-content">
+                <div class="swiss-grid">
+                    <div class="col-4" style="display: flex; flex-direction: column; justify-content: space-between; padding-right: 12px;">
+                        <div>
+                            <div class="kicker"><span>URGENSI PENELITIAN</span></div>
+                            <h2 class="slide-heading">Mengapa Klasifikasi Citra Beras Perlu Ringan &amp; Presisi?</h2>
+                            <div class="accent-rule"></div>
+                            <p class="slide-lead">
+                                Pengendalian mutu industri pangan dan deteksi pemalsuan varietas beras menuntut
+                                verifikasi visual yang cepat, konsisten, dan dapat dijalankan tanpa infrastruktur GPU mahal.
+                            </p>
+                        </div>
+
+                        <div class="swiss-panel swiss-panel--subtle swiss-panel--red-top">
+                            <div class="meta-label">Target Rekayasa Sistem</div>
+                            <div style="font-weight: var(--primitive-fontWeight-bold); font-size: var(--primitive-fontSize-lg); margin-top: 4px;">
+                                Akurasi tinggi di CPU server &amp; edge device tanpa risiko Out-Of-Memory.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-8 swiss-list-stack animate-stagger">
+                        <div class="swiss-row-item">
+                            <div class="row-num">01</div>
+                            <div>
+                                <div class="row-title">Kemiripan Morfologi Antar-Varietas</div>
+                                <p class="body-text">
+                                    Lima varietas komersial (Arborio, Basmati, Ipsala, Jasmine, Karacadag) memiliki
+                                    perbedaan halus pada rasio panjang-lebar bulir, ketebalan, dan translusensi permukaan
+                                    yang sulit dipisahkan secara manual pada volume besar.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="swiss-row-item">
+                            <div class="row-num">02</div>
+                            <div>
+                                <div class="row-title">Keterbatasan Komputasi (CPU-Only Environment)</div>
+                                <p class="body-text">
+                                    Banyak skenario deployment di lapangan atau VPS hanya menyediakan CPU dengan jumlah
+                                    thread terbatas, sehingga model konvolusi berat menghasilkan latensi tinggi dan
+                                    konsumsi memori berlebih.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="swiss-row-item">
+                            <div class="row-num">03</div>
+                            <div>
+                                <div class="row-title">Stabilitas Training Terhadap Batas RAM &amp; Disk</div>
+                                <p class="body-text">
+                                    Proses training panjang pada dataset 10.000 citra rawan terhenti akibat kehabisan
+                                    memori (OOM) tanpa pengaturan batch kecil, pemantauan RSS periodik, dan mekanisme
+                                    resume checkpoint otomatis.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="swiss-footer">
+                <span class="footer-author">RAIHAN SHANDI ADRIDA MEILANO</span>
+                <span>RUMUSAN MASALAH</span>
+            </footer>
+        </section>
+
+        <!-- ==================== SLIDE 03: DATASET & PREPROCESSING ==================== -->
+        <section class="slide" data-title="Dataset & 5 Kelas Varietas">
+            <header class="swiss-masthead">
+                <div class="masthead-left">
+                    <span class="swiss-square"></span>
+                    <span>02 — DATASET &amp; PREPROCESSING</span>
+                </div>
+                <div class="masthead-right">
+                    <span>10.000 CITRA BERAS · 5 KELAS</span>
+                    <span class="masthead-index">03 / 09</span>
+                </div>
+            </header>
+
+            <div class="slide-content">
+                <div class="swiss-grid">
+                    <div class="col-7" style="display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+                        <div>
+                            <div class="kicker"><span>TAKSONOMI VARIETAS &amp; PREPROCESSING</span></div>
+                            <h2 class="slide-heading">5 Varietas Beras &amp; Pembagian Data Deterministik</h2>
+                        </div>
+
+                        <div class="table-scroll">
+                            <table class="swiss-table">
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>Varietas</th>
+                                        <th>Karakteristik Morfologi Citra</th>
+                                        <th class="num-col">Uji</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="mono">01</td>
+                                        <td><strong>Arborio</strong></td>
+                                        <td>Bulir pendek-sedang, agak bulat, tebal, kadar amilosa tinggi (risotto Italia).</td>
+                                        <td class="num-col">396</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="mono">02</td>
+                                        <td><strong>Basmati</strong></td>
+                                        <td>Aromatik Asia Selatan; bulir sangat panjang, ramping, dan pipih.</td>
+                                        <td class="num-col">399</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="mono">03</td>
+                                        <td><strong>Ipsala</strong></td>
+                                        <td>Beras putih asal Thrace, Turki; bulir agak bulat dengan ukuran seragam.</td>
+                                        <td class="num-col">398</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="mono">04</td>
+                                        <td><strong>Jasmine</strong></td>
+                                        <td>Beras wangi Thai Hom Mali; bulir panjang, tekstur lembut, agak tembus cahaya.</td>
+                                        <td class="num-col">406</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="mono">05</td>
+                                        <td><strong>Karacadag</strong></td>
+                                        <td>Beras tradisional Turki; bulir bulat pendek tahan cuaca dataran tinggi.</td>
+                                        <td class="num-col">401</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="spec-strip">
+                            <div class="spec-cell">
+                                <div class="meta-label">Dimensi Input</div>
+                                <div class="mono" style="font-weight: var(--primitive-fontWeight-bold); font-size: var(--primitive-fontSize-sm);">224 × 224 px</div>
+                            </div>
+                            <div class="spec-cell">
+                                <div class="meta-label">Split Rasio (Seed 42)</div>
+                                <div class="mono" style="font-weight: var(--primitive-fontWeight-bold); font-size: var(--primitive-fontSize-sm);">8.000 : 2.000 (80/20)</div>
+                            </div>
+                            <div class="spec-cell">
+                                <div class="meta-label">Normalisasi ImageNet</div>
+                                <div class="mono" style="font-size: var(--primitive-fontSize-2xs);">μ=[0.485,0.456,0.406]</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-5">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <span class="chart-title">Distribusi Sampel Validasi (2.000 Citra)</span>
+                                <span class="mono" style="font-size: var(--primitive-fontSize-2xs); color: var(--color-primary);">SEIMBANG ~20%/KELAS</span>
+                            </div>
+                            <div class="chart-wrap">
+                                <canvas id="datasetChart"></canvas>
+                            </div>
+                            <div style="padding-top: 8px; border-top: 1px solid var(--color-border); display: flex; justify-content: space-between; font-size: var(--primitive-fontSize-2xs);" class="mono">
+                                <span>TOTAL DATASET: 10.000 CITRA</span>
+                                <span>TRAIN: 80% · VAL: 20%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="swiss-footer">
+                <span class="footer-author">RAIHAN SHANDI ADRIDA MEILANO</span>
+                <span>DATASET &amp; PREPROCESSING</span>
+            </footer>
+        </section>
+
+        <!-- ==================== SLIDE 04: ARSITEKTUR MODEL ==================== -->
+        <section class="slide slide--surface" data-title="Arsitektur MobileNetV3-Small">
+            <header class="swiss-masthead">
+                <div class="masthead-left">
+                    <span class="swiss-square"></span>
+                    <span>03 — ARSITEKTUR DEEP LEARNING</span>
+                </div>
+                <div class="masthead-right">
+                    <span>TRANSFER LEARNING · IMAGENET-1K</span>
+                    <span class="masthead-index">04 / 09</span>
+                </div>
+            </header>
+
+            <div class="slide-content">
+                <div class="arch-layout">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 16px;">
+                        <div>
+                            <div class="kicker"><span>MOBILENETV3-SMALL BACKBONE</span></div>
+                            <h2 class="slide-heading">Arsitektur Ringan untuk Ekstraksi Fitur Morfologi</h2>
+                        </div>
+                        <div class="mono" style="font-size: var(--primitive-fontSize-xs); color: var(--color-foreground-muted);">
+                            WEIGHTS: MobileNet_V3_Small_Weights.DEFAULT
+                        </div>
+                    </div>
+
+                    <div class="pipeline-strip animate-fade-up">
+                        <div class="pipe-step">
+                            <span class="pipe-tag">STAGE 01</span>
+                            <strong>Input Tensor</strong>
+                            <span class="mono body-text">3 × 224 × 224 RGB</span>
+                        </div>
+                        <div class="pipe-step">
+                            <span class="pipe-tag">STAGE 02</span>
+                            <strong>Feature Extractor</strong>
+                            <span class="mono body-text">Bneck + SE + h-swish</span>
+                        </div>
+                        <div class="pipe-step">
+                            <span class="pipe-tag">STAGE 03</span>
+                            <strong>Classifier Head [3]</strong>
+                            <span class="mono body-text">Linear(1024 → 5)</span>
+                        </div>
+                        <div class="pipe-step">
+                            <span class="pipe-tag">OUTPUT</span>
+                            <strong>5 Kelas Beras</strong>
+                            <span class="mono" style="font-size: var(--primitive-fontSize-xs); color: var(--color-inverse-muted);">Arborio … Karacadag</span>
+                        </div>
+                    </div>
+
+                    <div class="grid-2x2 animate-stagger">
+                        <div class="swiss-panel swiss-panel--red-top">
+                            <div class="kicker"><span>01 // EFISIENSI KONVOLUSI</span></div>
+                            <h3 style="font-size: var(--primitive-fontSize-lg); margin-bottom: 4px;">Depthwise Separable Convolutions</h3>
+                            <p class="body-text">
+                                Memisahkan konvolusi spasial dan konvolusi titik (pointwise 1×1) untuk memangkas
+                                jumlah parameter serta operasi FLOPs secara drastis di CPU.
+                            </p>
+                        </div>
+                        <div class="swiss-panel swiss-panel--black-top">
+                            <div class="kicker"><span>02 // ALIRAN GRADIEN</span></div>
+                            <h3 style="font-size: var(--primitive-fontSize-lg); margin-bottom: 4px;">Inverted Residual &amp; Linear Bottlenecks</h3>
+                            <p class="body-text">
+                                Ekspansi fitur berdimensi rendah ke tinggi lalu diproyeksikan kembali tanpa
+                                kehilangan informasi tekstur halus bulir beras.
+                            </p>
+                        </div>
+                        <div class="swiss-panel swiss-panel--black-top">
+                            <div class="kicker"><span>03 // ATENSI KANAL</span></div>
+                            <h3 style="font-size: var(--primitive-fontSize-lg); margin-bottom: 4px;">Squeeze-and-Excitation (SE) Modules</h3>
+                            <p class="body-text">
+                                Memberikan bobot adaptif pada kanal fitur yang paling diskriminatif, memperkuat
+                                pembedaan bentuk, panjang, dan kontur warna tiap varietas.
+                            </p>
+                        </div>
+                        <div class="swiss-panel swiss-panel--ink">
+                            <div class="kicker"><span>04 // AKTIVASI &amp; UKURAN MODEL</span></div>
+                            <h3 style="font-size: var(--primitive-fontSize-lg); margin-bottom: 4px;">Aktivasi Hard-Swish (h-swish)</h3>
+                            <p style="font-size: var(--slide-body-size); color: var(--color-inverse-muted);">
+                                Mengganti fungsi Swish dengan aproksimasi ReLU6 piecewise-linear yang cepat di CPU.
+                                Bobot akhir <span class="mono" style="color: var(--color-inverse-fg);">best_mobilenetv3.pth</span> hanya <strong style="color: var(--color-primary);">6,22 MB</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="swiss-footer">
+                <span class="footer-author">RAIHAN SHANDI ADRIDA MEILANO</span>
+                <span>ARSITEKTUR MODEL</span>
+            </footer>
+        </section>
+
+        <!-- ==================== SLIDE 05: KONFIGURASI TRAINING & WATCHDOG ==================== -->
+        <section class="slide" data-title="Konfigurasi Training & Anti-OOM">
+            <header class="swiss-masthead">
+                <div class="masthead-left">
+                    <span class="swiss-square"></span>
+                    <span>04 — STRATEGI PELATIHAN &amp; KEAMANAN RAM</span>
+                </div>
+                <div class="masthead-right">
+                    <span>TRAIN_MOBILENETV3.PY</span>
+                    <span class="masthead-index">05 / 09</span>
+                </div>
+            </header>
+
+            <div class="slide-content">
+                <div class="swiss-grid">
+                    <div class="col-7" style="display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+                        <div>
+                            <div class="kicker"><span>HYPERPARAMETER &amp; KONVERGENSI</span></div>
+                            <h2 class="slide-heading">Konfigurasi Training Terkendali pada CPU</h2>
+                            <p class="body-text" style="margin-top: 6px;">
+                                Pelatihan berjalan deterministik dengan batasan thread CPU, batch berukuran kecil,
+                                penjadwalan learning rate adaptif, dan penghentian dini berbasis akurasi validasi.
+                            </p>
+                        </div>
+
+                        <div class="kv-grid">
+                            <div class="kv-cell">
+                                <div class="meta-label">Optimizer &amp; Learning Rate</div>
+                                <div class="mono" style="font-weight: var(--primitive-fontWeight-bold);">AdamW (lr = 1e-4)</div>
+                            </div>
+                            <div class="kv-cell">
+                                <div class="meta-label">Loss &amp; Gradient Clipping</div>
+                                <div class="mono" style="font-weight: var(--primitive-fontWeight-bold);">CrossEntropy · max_norm 5.0</div>
+                            </div>
+                            <div class="kv-cell">
+                                <div class="meta-label">Hardware Constraint</div>
+                                <div class="mono" style="font-weight: var(--primitive-fontWeight-bold);">CPU · 2 Threads · Batch 8</div>
+                            </div>
+                            <div class="kv-cell">
+                                <div class="meta-label">LR Scheduler</div>
+                                <div class="mono" style="font-weight: var(--primitive-fontWeight-bold);">ReduceLROnPlateau (p=5, ×0.5)</div>
+                            </div>
+                            <div class="kv-cell">
+                                <div class="meta-label">Early Stopping</div>
+                                <div class="mono" style="font-weight: var(--primitive-fontWeight-bold);">Berhenti Epoch 14 / 100 (10/10)</div>
+                            </div>
+                            <div class="kv-cell">
+                                <div class="meta-label">Train Loss Akhir</div>
+                                <div class="mono" style="font-weight: var(--primitive-fontWeight-bold); color: var(--color-primary);">0.0024 (Val Acc 1.0000)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-5">
+                        <div class="swiss-panel swiss-panel--red-top" style="height: 100%;">
+                            <div>
+                                <div class="kicker"><span>PROTOKOL WATCHDOG ANTI-OOM</span></div>
+                                <h3 style="font-size: var(--primitive-fontSize-xl); margin-bottom: 12px;">
+                                    Pengawasan Sumber Daya Real-Time
+                                </h3>
+                                <ul class="watchdog-list">
+                                    <li>
+                                        <strong>Audit Periodik Tiap 20 Batch</strong>
+                                        <p class="body-text">Fungsi <span class="mono">check_watchdog()</span> memantau RSS proses via <span class="mono">psutil</span> dan ruang disk via <span class="mono">shutil</span>.</p>
+                                    </li>
+                                    <li>
+                                        <strong>Ambang Batas Aman VPS</strong>
+                                        <p class="body-text">Otomatis berhenti aman jika sisa RAM &lt; <span class="mono">200 MB</span> atau disk kosong &lt; <span class="mono">3,0 GB</span>.</p>
+                                    </li>
+                                    <li>
+                                        <strong>Checkpoint &amp; Garbage Collection</strong>
+                                        <p class="body-text">Menyimpan <span class="mono">checkpoint_latest.pth</span> (model, optimizer, scheduler) dan menjalankan <span class="mono">gc.collect()</span> setiap epoch.</p>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="swiss-panel swiss-panel--subtle" style="padding: 10px 12px;">
+                                <div class="meta-label">Status Akhir Checkpoint (Epoch 14)</div>
+                                <div class="mono" style="font-size: var(--primitive-fontSize-xs);">
+                                    Total Waktu: 5.075,6 dtk (~84,6 mnt) · Peak RSS: 652,9 MB
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="swiss-footer">
+                <span class="footer-author">RAIHAN SHANDI ADRIDA MEILANO</span>
+                <span>KONFIGURASI &amp; WATCHDOG</span>
+            </footer>
+        </section>
+
+        <!-- ==================== SLIDE 06: HASIL UTAMA (DARK PATTERN BREAK) ==================== -->
+        <section class="slide slide--dark" data-title="Hasil Utama Evaluasi Global">
+            <header class="swiss-masthead">
+                <div class="masthead-left">
+                    <span class="swiss-square"></span>
+                    <span>05 — RINGKASAN METRIK GLOBAL (NOTEBOOK OUTPUT)</span>
+                </div>
+                <div class="masthead-right">
+                    <span>SUMMARY_METRICS.CSV · 2.000 CITRA UJI</span>
+                    <span class="masthead-index">06 / 09</span>
+                </div>
+            </header>
+
+            <div class="slide-content">
+                <div style="display: flex; flex-direction: column; height: 100%; justify-content: space-between;">
+                    <div class="dark-hero-band animate-fade-up">
+                        <div>
+                            <div class="kicker"><span>PERFORMA VALIDASI SEMPURNA</span></div>
+                            <div class="dark-giant-stat">100.00<span>%</span></div>
+                            <div style="font-size: clamp(1rem, 1.4vw, 1.3rem); font-weight: var(--primitive-fontWeight-semibold); margin-top: 8px;">
+                                Akurasi Global pada 2.000 Citra Uji Tanpa Satu Pun Kesalahan Prediksi
+                            </div>
+                        </div>
+                        <div class="swiss-panel swiss-panel--dark" style="border-left: 4px solid var(--color-primary);">
+                            <div class="meta-label" style="color: var(--color-inverse-muted);">VERIFIKASI NOTEBOOK CELL 4 &amp; 5</div>
+                            <p style="font-size: var(--slide-body-size); color: var(--color-inverse-muted); line-height: 1.5; margin-top: 6px;">
+                                Evaluasi ulang bobot <span class="mono" style="color: var(--color-inverse-fg);">best_mobilenetv3.pth</span> pada
+                                keseluruhan validation split menghasilkan <strong style="color: var(--color-inverse-fg);">0 false positive</strong>
+                                dan <strong style="color: var(--color-inverse-fg);">0 false negative</strong> di seluruh 5 varietas beras.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="dark-kpi-grid animate-stagger">
+                        <div class="swiss-panel swiss-panel--dark">
+                            <div class="meta-label" style="color: var(--color-inverse-muted);">MACRO F1 / P / R</div>
+                            <div class="dark-kpi-val">1.0000</div>
+                            <p style="font-size: var(--primitive-fontSize-xs); color: var(--color-inverse-muted);">
+                                Precision, Recall &amp; F1 seragam sempurna di 5 kelas
+                            </p>
+                        </div>
+                        <div class="swiss-panel swiss-panel--dark">
+                            <div class="meta-label" style="color: var(--color-inverse-muted);">INFERENSI CPU</div>
+                            <div class="dark-kpi-val" style="color: var(--color-primary);">7,14 ms</div>
+                            <p style="font-size: var(--primitive-fontSize-xs); color: var(--color-inverse-muted);">
+                                ~140 FPS di summary_metrics.csv (10,50 ms saat run Cell 4)
+                            </p>
+                        </div>
+                        <div class="swiss-panel swiss-panel--dark">
+                            <div class="meta-label" style="color: var(--color-inverse-muted);">PEAK RAM (RSS)</div>
+                            <div class="dark-kpi-val">652,9 MB</div>
+                            <p style="font-size: var(--primitive-fontSize-xs); color: var(--color-inverse-muted);">
+                                Sangat hemat memori, aman di VPS RAM terbatas
+                            </p>
+                        </div>
+                        <div class="swiss-panel swiss-panel--dark">
+                            <div class="meta-label" style="color: var(--color-inverse-muted);">DURASI TRAINING</div>
+                            <div class="dark-kpi-val">5.075,6 s</div>
+                            <p style="font-size: var(--primitive-fontSize-xs); color: var(--color-inverse-muted);">
+                                ~1 jam 24 menit total hingga early stop Epoch 14
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="swiss-footer">
+                <span class="footer-author">RAIHAN SHANDI ADRIDA MEILANO</span>
+                <span>RINGKASAN METRIK GLOBAL</span>
+            </footer>
+        </section>
+
+        <!-- ==================== SLIDE 07: CONFUSION MATRIX & REPORT ==================== -->
+        <section class="slide slide--surface" data-title="Confusion Matrix & Classification Report">
+            <header class="swiss-masthead">
+                <div class="masthead-left">
+                    <span class="swiss-square"></span>
+                    <span>06 — CLASSIFICATION REPORT &amp; CONFUSION MATRIX</span>
+                </div>
+                <div class="masthead-right">
+                    <span>CELL 5 &amp; CELL 6 · 2.000 SAMPEL</span>
+                    <span class="masthead-index">07 / 09</span>
+                </div>
+            </header>
+
+            <div class="slide-content">
+                <div class="swiss-grid">
+                    <div class="col-6" style="display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;">
+                            <div>
+                                <div class="kicker"><span>MATRIKS KEBINGUNGAN (DATA ASLI)</span></div>
+                                <h2 style="font-size: clamp(1.3rem, 2vw, 1.85rem);">Diagonal Sempurna 5 × 5</h2>
+                            </div>
+                            <button type="button" class="artifact-btn" id="openCmModalBtn">Lihat PNG 300 DPI</button>
+                        </div>
+
+                        <div class="table-scroll">
+                            <table class="cm-grid" aria-label="Confusion Matrix 5 Kelas Varietas Beras">
+                                <thead>
+                                    <tr>
+                                        <th>Aktual \ Prediksi</th>
+                                        <th>Arborio</th>
+                                        <th>Basmati</th>
+                                        <th>Ipsala</th>
+                                        <th>Jasmine</th>
+                                        <th>Karacadag</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <th>Arborio</th>
+                                        <td class="cm-diag">396</td>
+                                        <td class="cm-zero">0</td>
+                                        <td class="cm-zero">0</td>
+                                        <td class="cm-zero">0</td>
+                                        <td class="cm-zero">0</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Basmati</th>
+                                        <td class="cm-zero">0</td>
+                                        <td class="cm-diag">399</td>
+                                        <td class="cm-zero">0</td>
+                                        <td class="cm-zero">0</td>
+                                        <td class="cm-zero">0</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Ipsala</th>
+                                        <td class="cm-zero">0</td>
+                                        <td class="cm-zero">0</td>
+                                        <td class="cm-diag">398</td>
+                                        <td class="cm-zero">0</td>
+                                        <td class="cm-zero">0</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Jasmine</th>
+                                        <td class="cm-zero">0</td>
+                                        <td class="cm-zero">0</td>
+                                        <td class="cm-zero">0</td>
+                                        <td class="cm-diag">406</td>
+                                        <td class="cm-zero">0</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Karacadag</th>
+                                        <td class="cm-zero">0</td>
+                                        <td class="cm-zero">0</td>
+                                        <td class="cm-zero">0</td>
+                                        <td class="cm-zero">0</td>
+                                        <td class="cm-diag">401</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="swiss-panel swiss-panel--subtle" style="padding: 10px 14px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span class="mono" style="font-size: var(--primitive-fontSize-xs); font-weight: var(--primitive-fontWeight-bold);">
+                                    MACRO &amp; WEIGHTED AVG: P=1.00 · R=1.00 · F1=1.00
+                                </span>
+                                <span class="mono" style="font-size: var(--primitive-fontSize-xs); color: var(--color-primary); font-weight: var(--primitive-fontWeight-bold);">
+                                    ERROR = 0 / 2.000
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <span class="chart-title">Prediksi Benar vs Misklasifikasi per Kelas</span>
+                                <span class="mono" style="font-size: var(--primitive-fontSize-2xs); color: var(--color-foreground-muted);">CLASSIFICATION_REPORT.CSV</span>
+                            </div>
+                            <div class="chart-wrap">
+                                <canvas id="classificationChart"></canvas>
+                            </div>
+                            <div style="padding-top: 8px; border-top: 1px solid var(--color-border); font-size: var(--primitive-fontSize-2xs);" class="mono">
+                                SELURUH 5 VARIETAS MENCAPAI PRECISION 1.00, RECALL 1.00, DAN F1-SCORE 1.00.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="swiss-footer">
+                <span class="footer-author">RAIHAN SHANDI ADRIDA MEILANO</span>
+                <span>CONFUSION MATRIX &amp; REPORT</span>
+            </footer>
+        </section>
+
+        <!-- ==================== SLIDE 08: EFISIENSI & ARTEFAK ==================== -->
+        <section class="slide" data-title="Efisiensi Sumber Daya & Artefak">
+            <header class="swiss-masthead">
+                <div class="masthead-left">
+                    <span class="swiss-square"></span>
+                    <span>07 — PROFIL SUMBER DAYA &amp; ARTEFAK REPOSITORI</span>
+                </div>
+                <div class="masthead-right">
+                    <span>RUNS/MOBILENETV3_CPU</span>
+                    <span class="masthead-index">08 / 09</span>
+                </div>
+            </header>
+
+            <div class="slide-content">
+                <div class="swiss-grid">
+                    <div class="col-6">
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <span class="chart-title">Profil Memori CPU &amp; Ukuran Bobot (MB)</span>
+                                <span class="mono" style="font-size: var(--primitive-fontSize-2xs); color: var(--color-primary);">TRAINING_PROGRESS.JSON</span>
+                            </div>
+                            <div class="chart-wrap">
+                                <canvas id="resourceChart"></canvas>
+                            </div>
+                            <div style="padding-top: 8px; border-top: 1px solid var(--color-border); display: flex; justify-content: space-between; font-size: var(--primitive-fontSize-2xs);" class="mono">
+                                <span>EPOCH SELESAI: 14 / 100</span>
+                                <span>SWAP TERPAKAI: 1.515,2 MB</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-6" style="display: flex; flex-direction: column; justify-content: space-between; gap: 12px;">
+                        <div>
+                            <div class="kicker"><span>DELIVERABLE REPOSITORI</span></div>
+                            <h2 style="font-size: clamp(1.3rem, 2vw, 1.85rem);">Artefak Lengkap untuk Audit &amp; Deployment</h2>
+                            <p class="body-text" style="margin-top: 6px;">
+                                Seluruh bobot model terlatih, log progres training, matriks evaluasi CSV, hingga gambar
+                                resolusi tinggi terdokumentasi rapi di direktori <span class="mono">runs/mobilenetv3_cpu/</span>.
+                            </p>
+                        </div>
+
+                        <div class="artifact-list">
+                            <div class="artifact-item">
+                                <div>
+                                    <div class="artifact-name">train_mobilenetV3.ipynb</div>
+                                    <div class="artifact-desc">Notebook evaluasi end-to-end dengan tabel metrik &amp; heatmap</div>
+                                </div>
+                                <span class="artifact-tag">NOTEBOOK</span>
+                            </div>
+                            <div class="artifact-item">
+                                <div>
+                                    <div class="artifact-name">train_mobilenetV3.py</div>
+                                    <div class="artifact-desc">Script training mandiri dengan watchdog anti-OOM &amp; resume</div>
+                                </div>
+                                <span class="artifact-tag">TRAINING</span>
+                            </div>
+                            <div class="artifact-item">
+                                <div>
+                                    <div class="artifact-name">best_mobilenetv3.pth</div>
+                                    <div class="artifact-desc">State dict PyTorch terbaik untuk REST API / edge inference</div>
+                                </div>
+                                <span class="artifact-tag">6,22 MB</span>
+                            </div>
+                            <div class="artifact-item">
+                                <div>
+                                    <div class="artifact-name">summary_metrics.csv &amp; classification_report.csv</div>
+                                    <div class="artifact-desc">Audit metrik global &amp; performa per varietas (CSV)</div>
+                                </div>
+                                <span class="artifact-tag">METRIK</span>
+                            </div>
+                            <div class="artifact-item">
+                                <div>
+                                    <div class="artifact-name">confusion_matrix.csv &amp; 300dpi.png</div>
+                                    <div class="artifact-desc">Data matriks tabuler dan gambar publikasi resolusi tinggi</div>
+                                </div>
+                                <span class="artifact-tag">300 DPI</span>
+                            </div>
+                            <div class="artifact-item">
+                                <div>
+                                    <div class="artifact-name">training_progress.json</div>
+                                    <div class="artifact-desc">Log epoch akhir (Epoch 14, loss 0.0024, RSS &amp; durasi)</div>
+                                </div>
+                                <span class="artifact-tag">LOG JSON</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="swiss-footer">
+                <span class="footer-author">RAIHAN SHANDI ADRIDA MEILANO</span>
+                <span>SUMBER DAYA &amp; ARTEFAK</span>
+            </footer>
+        </section>
+
+        <!-- ==================== SLIDE 09: KESIMPULAN & PENUTUP ==================== -->
+        <section class="slide slide--surface" data-title="Kesimpulan & Penutup">
+            <header class="swiss-masthead">
+                <div class="masthead-left">
+                    <span class="swiss-square"></span>
+                    <span>08 — KESIMPULAN &amp; PENUTUP</span>
+                </div>
+                <div class="masthead-right">
+                    <span>CITRA DIGITAL · FINAL SUMMARY</span>
+                    <span class="masthead-index">09 / 09</span>
+                </div>
+            </header>
+
+            <div class="slide-content">
+                <div style="display: flex; flex-direction: column; height: 100%; justify-content: space-between; gap: 16px;">
+                    <div>
+                        <div class="kicker"><span>TEMUAN KUNCI EKSPERIMEN</span></div>
+                        <h2 class="slide-title" style="font-size: clamp(2rem, 3.6vw, 3.2rem);">
+                            Ringan di CPU. Presisi 100% pada 5 Varietas Beras.
+                        </h2>
+                    </div>
+
+                    <div class="closing-takeaways animate-stagger">
+                        <div class="swiss-panel swiss-panel--red-top">
+                            <div class="row-num" style="margin-bottom: 8px;">01</div>
+                            <h3 style="font-size: var(--primitive-fontSize-lg); margin-bottom: 6px;">Akurasi Uji Sempurna</h3>
+                            <p class="body-text">
+                                MobileNetV3-Small mencapai akurasi <strong>100,00%</strong>, Macro Precision <strong>1,00</strong>,
+                                Recall <strong>1,00</strong>, dan F1-Score <strong>1,00</strong> di seluruh 2.000 citra validasi.
+                            </p>
+                        </div>
+                        <div class="swiss-panel swiss-panel--black-top">
+                            <div class="row-num" style="margin-bottom: 8px;">02</div>
+                            <h3 style="font-size: var(--primitive-fontSize-lg); margin-bottom: 6px;">Siap Inferensi Edge &amp; Web</h3>
+                            <p class="body-text">
+                                Dengan ukuran bobot hanya <strong>6,22 MB</strong> dan kecepatan inferensi <strong>~7,14 ms/citra</strong>
+                                (~140 FPS di CPU), model ideal untuk integrasi FastAPI, Flask, maupun perangkat edge.
+                            </p>
+                        </div>
+                        <div class="swiss-panel swiss-panel--black-top">
+                            <div class="row-num" style="margin-bottom: 8px;">03</div>
+                            <h3 style="font-size: var(--primitive-fontSize-lg); margin-bottom: 6px;">Pipeline Tahan OOM</h3>
+                            <p class="body-text">
+                                Watchdog RAM/disk, batch size 8, dan early stopping di epoch 14 menjaga penggunaan memori
+                                puncak tetap terkendali di <strong>652,9 MB</strong> dengan hasil sepenuhnya reproducible.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="closing-signature">
+                        <div>
+                            <div class="meta-label">Penyusun Laporan</div>
+                            <div style="font-size: clamp(1.35rem, 2.2vw, 2rem); font-weight: var(--primitive-fontWeight-extrabold); letter-spacing: var(--primitive-letterSpacing-tight);">
+                                Raihan Shandi Adrida Meilano
+                            </div>
+                            <div class="mono" style="font-size: var(--primitive-fontSize-xs); color: var(--color-foreground-muted); margin-top: 4px;">
+                                raihan.s.a.meilano@gmail.com
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="meta-label">Repositori &amp; Dokumentasi</div>
+                            <div class="mono" style="font-size: var(--primitive-fontSize-sm); font-weight: var(--primitive-fontWeight-bold);">
+                                github.com/roxymayford/Citra-Digital
+                            </div>
+                            <div class="mono" style="font-size: var(--primitive-fontSize-2xs); color: var(--color-primary); margin-top: 4px;">
+                                GUNAKAN ← / → ATAU KLIK UNTUK NAVIGASI
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="swiss-footer">
+                <span class="footer-author">RAIHAN SHANDI ADRIDA MEILANO</span>
+                <span>TERIMA KASIH · CITRA DIGITAL</span>
+            </footer>
+        </section>
+
+    </div><!-- /.slide-deck -->
+
+    <!-- Navigation Controls -->
+    <div class="nav-controls" data-no-advance>
+        <button type="button" class="nav-btn" id="prevBtn" aria-label="Slide sebelumnya">←</button>
+        <button type="button" class="slide-counter" id="indexToggleBtn" title="Daftar Slide">
+            <span id="current">01</span>&nbsp;/&nbsp;<span id="total">09</span>
+        </button>
+        <button type="button" class="nav-btn" id="nextBtn" aria-label="Slide berikutnya">→</button>
+    </div>
+
+    <!-- Quick Jump Slide Drawer -->
+    <div class="index-drawer" id="indexDrawer" data-no-advance></div>
+
+    <!-- Original 300 DPI Confusion Matrix Modal -->
+    <div class="modal-backdrop" id="cmModal" data-no-advance>
+        <div class="modal-box">
+            <div class="modal-header">
+                <span class="mono" style="font-size: var(--primitive-fontSize-xs); font-weight: var(--primitive-fontWeight-bold);">
+                    ARTEFAK ASLI: runs/mobilenetv3_cpu/confusion_matrix_300dpi.png
+                </span>
+                <button type="button" class="artifact-btn" id="closeCmModalBtn">Tutup [ESC]</button>
+            </div>
+            <img src="runs/mobilenetv3_cpu/confusion_matrix_300dpi.png" alt="Confusion Matrix 300 DPI MobileNetV3-Small" class="modal-img">
+        </div>
+    </div>
+
+    <script>
+        // ================= NAVIGATION & INDEX =================
+        const slides = Array.from(document.querySelectorAll('.slide'));
+        const total = slides.length;
+        let current = 1;
+
+        const currentEl = document.getElementById('current');
+        const totalEl = document.getElementById('total');
+        const progressBar = document.getElementById('progressBar');
+        const indexDrawer = document.getElementById('indexDrawer');
+        const cmModal = document.getElementById('cmModal');
+
+        totalEl.textContent = String(total).padStart(2, '0');
+
+        // Build Quick Jump Drawer
+        slides.forEach((slide, idx) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'index-item';
+            btn.innerHTML = `<span class="index-item-num">${String(idx + 1).padStart(2, '0')}</span><span>${slide.dataset.title || 'Slide'}</span>`;
+            btn.addEventListener('click', () => {
+                showSlide(idx + 1);
+                indexDrawer.classList.remove('open');
+            });
+            indexDrawer.appendChild(btn);
+        });
+
+        function showSlide(n) {
+            if (n < 1) n = 1;
+            if (n > total) n = total;
+            current = n;
+
+            slides.forEach((s, i) => {
+                s.classList.toggle('active', i === n - 1);
+            });
+
+            Array.from(indexDrawer.children).forEach((item, i) => {
+                item.classList.toggle('current', i === n - 1);
+            });
+
+            currentEl.textContent = String(n).padStart(2, '0');
+            progressBar.style.width = ((n / total) * 100) + '%';
+        }
+
+        function nextSlide() { showSlide(current + 1); }
+        function prevSlide() { showSlide(current - 1); }
+
+        document.getElementById('prevBtn').addEventListener('click', prevSlide);
+        document.getElementById('nextBtn').addEventListener('click', nextSlide);
+        document.getElementById('indexToggleBtn').addEventListener('click', () => {
+            indexDrawer.classList.toggle('open');
+        });
+
+        document.getElementById('openCmModalBtn').addEventListener('click', () => {
+            cmModal.classList.add('open');
+        });
+        document.getElementById('closeCmModalBtn').addEventListener('click', () => {
+            cmModal.classList.remove('open');
+        });
+        cmModal.addEventListener('click', (e) => {
+            if (e.target === cmModal) cmModal.classList.remove('open');
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                cmModal.classList.remove('open');
+                indexDrawer.classList.remove('open');
+                return;
+            }
+            if (cmModal.classList.contains('open')) return;
+            if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                e.preventDefault();
+                prevSlide();
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                showSlide(1);
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                showSlide(total);
+            } else if (/^[1-9]$/.test(e.key) && Number(e.key) <= total) {
+                showSlide(Number(e.key));
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (cmModal.classList.contains('open')) return;
+            if (e.target.closest('[data-no-advance]') || e.target.closest('button, a, canvas, table')) return;
+            if (window.getSelection && window.getSelection().toString().length > 0) return;
+            indexDrawer.classList.remove('open');
+            nextSlide();
+        });
+
+        showSlide(1);
+
+        // ================= CHART.JS (SWISS TOKEN-DRIVEN) =================
+        function cssVar(name) {
+            return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        }
+
+        if (typeof Chart !== 'undefined') {
+            const swissInk = cssVar('--primitive-color-ink') || '#0B0B0C';
+            const swissRed = cssVar('--primitive-color-swiss-red') || '#E1261C';
+            const swissSlate = cssVar('--primitive-color-slate-bar') || '#6E6E73';
+            const swissRule = cssVar('--primitive-color-rule') || '#D2D0C8';
+            const swissMuted = cssVar('--primitive-color-ink-muted') || '#6E6E73';
+            const fontMono = cssVar('--typography-font-mono') || 'monospace';
+
+            Chart.defaults.font.family = fontMono;
+            Chart.defaults.color = swissInk;
+
+            // 1. Slide 03: Dataset Validation Distribution
+            new Chart(document.getElementById('datasetChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Karacadag'],
+                    datasets: [{
+                        label: 'Citra Uji',
+                        data: [396, 399, 398, 406, 401],
+                        backgroundColor: [swissInk, swissInk, swissInk, swissRed, swissInk],
+                        borderWidth: 0,
+                        borderRadius: 0,
+                        barPercentage: 0.62
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: swissInk,
+                            cornerRadius: 0,
+                            callbacks: {
+                                label: (ctx) => ` ${ctx.parsed.y} citra (${((ctx.parsed.y / 2000) * 100).toFixed(2)}%)`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            border: { color: swissInk, width: 2 },
+                            ticks: { color: swissInk, font: { size: 11, weight: '600' } }
+                        },
+                        y: {
+                            min: 350,
+                            max: 420,
+                            grid: { color: swissRule },
+                            border: { display: false },
+                            ticks: { color: swissMuted, font: { size: 10 }, stepSize: 10 }
+                        }
+                    }
+                }
+            });
+
+            // 2. Slide 07: Classification Report (True Positives vs Errors)
+            new Chart(document.getElementById('classificationChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Arborio', 'Basmati', 'Ipsala', 'Jasmine', 'Karacadag'],
+                    datasets: [
+                        {
+                            label: 'Prediksi Benar (TP)',
+                            data: [396, 399, 398, 406, 401],
+                            backgroundColor: swissInk,
+                            borderRadius: 0,
+                            barPercentage: 0.6
+                        },
+                        {
+                            label: 'Kesalahan (FP + FN)',
+                            data: [0, 0, 0, 0, 0],
+                            backgroundColor: swissRed,
+                            borderRadius: 0,
+                            barPercentage: 0.6
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 12, boxHeight: 12, color: swissInk, font: { size: 11 } }
+                        },
+                        tooltip: {
+                            backgroundColor: swissInk,
+                            cornerRadius: 0
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            max: 430,
+                            grid: { color: swissRule },
+                            border: { color: swissInk, width: 2 },
+                            ticks: { color: swissMuted, font: { size: 10 } }
+                        },
+                        y: {
+                            stacked: true,
+                            grid: { display: false },
+                            border: { color: swissInk, width: 2 },
+                            ticks: { color: swissInk, font: { size: 11, weight: '700' } }
+                        }
+                    }
+                }
+            });
+
+            // 3. Slide 08: CPU Memory & Model Size Profile
+            new Chart(document.getElementById('resourceChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Peak RSS Proses', 'Free RAM Tersisa', 'Batas Watchdog', 'Bobot Model (.pth)'],
+                    datasets: [{
+                        label: 'Ukuran / Kapasitas (MB)',
+                        data: [652.9, 452.4, 200.0, 6.22],
+                        backgroundColor: [swissInk, swissSlate, swissRed, swissInk],
+                        borderRadius: 0,
+                        barPercentage: 0.55
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: swissInk,
+                            cornerRadius: 0,
+                            callbacks: {
+                                label: (ctx) => ` ${ctx.parsed.y} MB`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            border: { color: swissInk, width: 2 },
+                            ticks: { color: swissInk, font: { size: 10, weight: '600' } }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: 750,
+                            grid: { color: swissRule },
+                            border: { display: false },
+                            ticks: {
+                                color: swissMuted,
+                                font: { size: 10 },
+                                callback: (v) => `${v} MB`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
