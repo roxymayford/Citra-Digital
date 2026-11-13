@@ -999,10 +999,17 @@
             }
         }
 
+        @page {
+            size: 1280px 720px;
+            margin: 0;
+        }
+
         @media print {
             html, body {
                 overflow: visible;
                 background: var(--color-surface);
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
             .progress-bar,
             .nav-controls,
@@ -1014,16 +1021,31 @@
                 position: static;
                 max-width: none;
                 max-height: none;
-                width: 100%;
+                width: 1280px;
                 height: auto;
                 border: none;
             }
             .slide {
                 position: relative;
+                width: 1280px;
+                height: 720px;
                 opacity: 1;
                 visibility: visible;
                 page-break-after: always;
-                height: 100vh;
+                break-after: page;
+            }
+            .slide:last-child {
+                page-break-after: auto;
+                break-after: auto;
+            }
+            .swiss-footer {
+                padding-right: 0;
+            }
+            .animate-fade-up,
+            .animate-stagger > * {
+                opacity: 1;
+                animation: none;
+                transform: none;
             }
         }
     </style>
